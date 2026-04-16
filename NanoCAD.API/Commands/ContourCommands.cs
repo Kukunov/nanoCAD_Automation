@@ -1,5 +1,9 @@
-﻿using HostMgd.ApplicationServices;
+﻿using System.IO;
+using System.Text;
+using System.Text.Json;
+using HostMgd.ApplicationServices;
 using HostMgd.EditorInput;
+using Teigha.DatabaseServices;
 using Teigha.Runtime;
 using NanoCAD.API.Services;
 using Application = HostMgd.ApplicationServices.Application;
@@ -35,7 +39,7 @@ namespace NanoCAD.API.Commands
 
         // Сменить текущий контур
         [CommandMethod("УСТКОН", CommandFlags.Modal)]
-        [CommandMethod("CONTOUR_SET", CommandFlags.Modal)]
+        [CommandMethod("SETLOOP", CommandFlags.Modal)]
         public void SetCurrentContour()
         {
             var doc = Application.DocumentManager.MdiActiveDocument;
