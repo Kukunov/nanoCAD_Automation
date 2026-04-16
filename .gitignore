@@ -1,0 +1,63 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+*.vsp
+*.vspx
+*.psess
+*.vssscc
+*.vspscc
+*.sln.docstates
+*.tmp
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Dd]ebugPublic/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# .NET Core / .NET 6+
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
+project.lock.json
+*.nuget.props
+*.nuget.targets
+
+# NanoCAD specific (библиотеки nanoCAD не должны быть в репо)
+**/hostmgd.dll
+**/hostdbmgd.dll
+**/TD_Mgd.dll
+
+# Database files (если большие)
+*.db
+*.sqlite
+*.sqlite3
+
+# User-specific files
+*.swp
+*.*~
+*.sln.ide/
+.idea/
+
+# Files to keep (исключения)
+!**/*.cs
+!**/*.csproj
+!**/*.sln
+!**/*.config
+!**/README.md
+!**/.gitignore
+!**/*.xaml
+!**/*.resx
+!**/*.settings
