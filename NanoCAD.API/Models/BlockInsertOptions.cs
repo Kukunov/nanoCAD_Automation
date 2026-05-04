@@ -1,19 +1,20 @@
 ﻿namespace NanoCAD.API.Models
 {
+    /// <summary>
     /// Параметры для вставки блока
+    /// </summary>
     public class BlockInsertOptions
     {
-        /// Имя блока в файле blocks.dwg
-        public string BlockName { get; set; } = string.Empty;
+        public string BlockName { get; set; } = string.Empty; // Имя блока в файле blocks.dwg
 
-        /// Обозначение типа (атрибут ТИП)
-        public string TypeDesignation { get; set; } = "TE";
+        public string TypeDesignation { get; set; } = "TE";   // Обозначение типа (атрибут ТИП), по умолчанию - "TE"
 
-        /// Позиционное обозначение (атрибут ПОЗ)
-        public string Position { get; set; } = "1-1";
+        public string Position { get; set; } = "1-1";         // Позиционное обозначение (атрибут ПОЗ), по умолчанию - "1-1"
     }
 
+    /// <summary>
     /// Результат вставки блока
+    /// </summary>
     public class BlockInsertResult
     {
         public bool Success { get; set; }

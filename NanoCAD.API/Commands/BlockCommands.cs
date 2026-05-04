@@ -1,16 +1,23 @@
 ﻿using HostMgd.ApplicationServices;
 using HostMgd.EditorInput;
-using Teigha.Runtime;
 using NanoCAD.API.Models;
 using NanoCAD.API.Services;
+using Teigha.Geometry;
+using Teigha.Runtime;
 using Application = HostMgd.ApplicationServices.Application;
 
 namespace NanoCAD.API.Commands
 {
+    /// <summary>
+    /// Команды и методы вставки блоков
+    /// </summary>
     public class BlockCommands
     {
         private readonly BlockService _blockService = new();
 
+        #region Команды пользователя
+
+        // Проверить наличие файла blocks.dwg в каталоге надстройки
         [CommandMethod("ПРОВБЛОКИ", CommandFlags.Modal)]
         [CommandMethod("CHECKBLOCKS", CommandFlags.Modal)]
         public void CheckBlocksFile()
@@ -30,6 +37,7 @@ namespace NanoCAD.API.Commands
             }
         }
 
+        // Вставка блока ПриборНаЩите
         [CommandMethod("ПНЩ", CommandFlags.Modal)]
         [CommandMethod("PNSH", CommandFlags.Modal)]
         public void InsertPNSH()
@@ -37,6 +45,7 @@ namespace NanoCAD.API.Commands
             InsertBlock("ПриборНаЩите", "ПНЩ");
         }
 
+        // Вставка блока ПриборВнеЩита
         [CommandMethod("ПВЩ", CommandFlags.Modal)]
         [CommandMethod("PVSH", CommandFlags.Modal)]
         public void InsertPVSH()
@@ -44,25 +53,18 @@ namespace NanoCAD.API.Commands
             InsertBlock("ПриборВнеЩита", "ПВЩ");
         }
 
-        [CommandMethod("ВСТАВИТЬБЛОК", CommandFlags.Modal)]
-        [CommandMethod("INSERTBLOCK", CommandFlags.Modal)]
+        // Выбор блока для вставки через список
+        [CommandMethod("ГОСТВСТАВКА", CommandFlags.Modal)]
+        [CommandMethod("GOSTINSERTION", CommandFlags.Modal)]
         public void InsertBlockWithChoice()
         {
             var doc = Application.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
             var ed = doc.Editor;
 
-            if (!_blockService.IsBlocksFileAvailable())
-            {
-                ed.WriteMessage($"\n[ОШИБКА] Файл blocks.dwg не найден: {_blockService.GetBlocksFilePath()}");
-                return;
-            }
-
             var keyOptions = new PromptKeywordOptions("\nВыберите тип блока: ");
-            keyOptions.Keywords.Add("ПНЩ");
-            keyOptions.Keywords.Add("ПВЩ");
-            keyOptions.Keywords.Add("PNSH");
-            keyOptions.Keywords.Add("PVSH");
+            keyOptions.Keywords.Add("Прибор по месту");
+            keyOptions.Keywords.Add("Прибор на щите");
             keyOptions.AllowNone = true;
 
             var keyResult = ed.GetKeywords(keyOptions);
@@ -70,13 +72,15 @@ namespace NanoCAD.API.Commands
 
             string blockName = keyResult.StringResult.ToUpperInvariant() switch
             {
-                "ПНЩ" or "PNSH" => "ПриборНаЩите",
-                "ПВЩ" or "PVSH" => "ПриборВнеЩита",
-                _ => "ПриборНаЩите"
+                "Прибор по месту" => "ПриборНаЩите",
+                "Прибор на щите" => "ПриборВнеЩита",
+                _ => "ПриборВнеЩита"
             };
 
             InsertBlock(blockName, keyResult.StringResult);
         }
+
+        #endregion
 
         private void InsertBlock(string blockName, string commandName)
         {
@@ -96,16 +100,19 @@ namespace NanoCAD.API.Commands
             ed.WriteMessage($"\n=== Вставка блока: {blockName} [{commandName}] ===");
             ed.WriteMessage($"\nТекущий контур: {contourService.GetCurrentContour()}");
 
-            // 1. Запрос обозначения типа (ТИП) с валидацией
-            string typeDesignation = PromptForTypeDesignation(ed);
-            if (typeDesignation == null) return; // Пользователь отменил ввод
+            // 1. Запрос ТИП с предложением последнего использованного значения
+            string typeDesignation = PromptForTypeDesignation(ed, contourService);
+            if (typeDesignation == null) return;
 
-            // 2. Запрос позиции (ПОЗ) с валидацией и автоматической генерацией
+            // 2. Запрос ПОЗ с автоматической генерацией
             string position = PromptForPosition(ed, contourService);
-            if (position == null) return; // Пользователь отменил ввод
+            if (position == null) return;
 
             // 3. Запрос точки вставки
-            var pointOptions = new PromptPointOptions("\nУкажите точку вставки (мышью или введите координаты): ");
+            var pointOptions = new PromptPointOptions("\nУкажите точку вставки (ЛКМ или координаты X,Y): ");
+            pointOptions.AllowNone = false;
+            pointOptions.UseBasePoint = false;
+
             var pointResult = ed.GetPoint(pointOptions);
 
             if (pointResult.Status != PromptStatus.OK)
@@ -127,11 +134,9 @@ namespace NanoCAD.API.Commands
             // 5. Вывод результата
             if (result.Success)
             {
-                ed.WriteMessage($"\n[OK] {result.Message}");
-                ed.WriteMessage($"\n     Блок: {result.BlockName}");
-                ed.WriteMessage($"\n     ТИП: {result.TypeDesignation}");
-                ed.WriteMessage($"\n     ПОЗ: {result.Position}");
-                ed.WriteMessage($"\n     {contourService.GetStatusInfo()}");
+                ed.WriteMessage($"\n[OK] Блок вставлен.");
+                ed.WriteMessage($"\nТИП: {result.TypeDesignation} | ПОЗ: {result.Position}");
+                ed.WriteMessage($"\n{contourService.GetStatusInfo()}");
             }
             else
             {
@@ -140,13 +145,15 @@ namespace NanoCAD.API.Commands
         }
 
         // Запрос обозначения типа с валидацией
-        private string PromptForTypeDesignation(Editor ed)
+        private string PromptForTypeDesignation(Editor ed, ContourService contourService)
         {
+            string lastType = contourService.GetLastTypeDesignation();
+
             while (true)
             {
-                var typeOptions = new PromptStringOptions("\nВведите обозначение типа (ТИП) - только латинские буквы, 1-4 символа: ");
+                var typeOptions = new PromptStringOptions($"\nВведите обозначение типа (ТИП) <{lastType}>: ");
                 typeOptions.AllowSpaces = false;
-                typeOptions.DefaultValue = "TE";
+                typeOptions.DefaultValue = lastType;
                 var typeResult = ed.GetString(typeOptions);
 
                 if (typeResult.Status == PromptStatus.Cancel)
@@ -161,21 +168,13 @@ namespace NanoCAD.API.Commands
                 }
 
                 string input = typeResult.StringResult;
-                if (string.IsNullOrWhiteSpace(input))
-                {
-                    input = "TE";
-                }
+                string typeDesignation = input.ToUpperInvariant();
+                var validation = ValidationService.ValidateTypeDesignation(typeDesignation);
 
-                input = input.ToUpperInvariant();
-
-                var validation = ValidationService.ValidateTypeDesignation(input);
                 if (validation.IsValid)
                 {
-                    if (!string.IsNullOrEmpty(validation.WarningMessage))
-                    {
-                        ed.WriteMessage($"\n[ПРЕДУПРЕЖДЕНИЕ] {validation.WarningMessage}");
-                    }
-                    return input;
+                    contourService.SetLastTypeDesignation(typeDesignation);
+                    return typeDesignation;
                 }
 
                 ed.WriteMessage($"\n[ОШИБКА] {validation.ErrorMessage}");
@@ -217,14 +216,8 @@ namespace NanoCAD.API.Commands
                 var validation = ValidationService.ValidatePosition(input);
                 if (validation.IsValid)
                 {
-                    // Обновляем счётчики контуров на основе введённой позиции
-                    TryUpdateCounterFromPosition(contourService, input);
-
-                    if (!string.IsNullOrEmpty(validation.WarningMessage))
-                    {
-                        ed.WriteMessage($"\n[ПРЕДУПРЕЖДЕНИЕ] {validation.WarningMessage}");
-                    }
-
+                    // Синхронизируем счётчики с введённой позицией
+                    SyncContourFromPosition(contourService, input);
                     return input;
                 }
 
@@ -233,8 +226,8 @@ namespace NanoCAD.API.Commands
             }
         }
 
-        // Пытается распарсить введённую позицию и обновить счётчик контура
-        private void TryUpdateCounterFromPosition(ContourService service, string position)
+        // Синхронизирует счётчики контуров с введённой позицией
+        private void SyncContourFromPosition(ContourService service, string position)
         {
             if (!ValidationService.IsPositionFormat(position))
                 return;
@@ -242,36 +235,25 @@ namespace NanoCAD.API.Commands
             int contour = ValidationService.ExtractContourNumber(position);
             int element = ValidationService.ExtractElementNumber(position);
 
-            // Если введённый контур отличается от текущего - меняем текущий
+            // Если контур отличается — переключаемся
             if (contour != service.GetCurrentContour())
             {
                 service.SetCurrentContour(contour);
             }
 
-            // Обновляем счётчик, если введённый элемент больше текущего
+            // Обновляем счётчик: устанавливаем на введённое значение
             var allContours = service.GetAllContours();
-            if (allContours.ContainsKey(contour))
+            int currentCounter = allContours.ContainsKey(contour) ? allContours[contour] : 0;
+
+            // Обновляем только если введённый элемент больше текущего счётчика
+            if (element > currentCounter)
             {
-                if (element >= allContours[contour])
-                {
-                    // Устанавливаем счётчик на введённое значение
-                    service.ResetContour(contour);
-                    for (int i = 0; i < element; i++)
-                    {
-                        service.GetNextPosition(contour);
-                    }
-                }
-            }
-            else
-            {
-                // Новый контур - инициализируем счётчик
-                service.SetCurrentContour(contour);
                 service.ResetContour(contour);
-                for (int i = 0; i < element - 1; i++)
+                for (int i = 0; i < element; i++)
                 {
                     service.GetNextPosition(contour);
                 }
             }
-        }
+        }      
     }
 }

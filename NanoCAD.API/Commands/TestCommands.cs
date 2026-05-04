@@ -5,11 +5,14 @@ using Application = HostMgd.ApplicationServices.Application;
 
 namespace NanoCAD.API.Commands
 {
-    /// Тестовые команды для проверки работоспособности
+    /// <summary>
+    /// Тестовые команды
+    /// </summary>
     public class TestCommands
     {
-        [CommandMethod("ТЕСТПРИВЕТ", CommandFlags.Modal)]
-        [CommandMethod("TESTHELLO", CommandFlags.Modal)]
+        // Проверка вывода многострочного текста в консоль nanoCAD
+        [CommandMethod("ТЕСТГОСТ", CommandFlags.Modal)]
+        [CommandMethod("TESTGOST", CommandFlags.Modal)]
         public void HelloCommand()
         {
             var doc = Application.DocumentManager.MdiActiveDocument;
@@ -20,6 +23,7 @@ namespace NanoCAD.API.Commands
             doc.Editor.WriteMessage("\n  Платформа: .NET 6.0");
         }
 
+        // Проверка вывода координат точки, указанной пользователем, в консоль nanoCAD
         [CommandMethod("ТЕСТТОЧКА", CommandFlags.Modal)]
         [CommandMethod("TESTPOINT", CommandFlags.Modal)]
         public void PointCommand()

@@ -3,18 +3,21 @@ using NanoCAD.API.Models;
 
 namespace NanoCAD.API.Services
 {
-    // Сервис для валидации вводимых данных
+    /// <summary>
+    /// Сервис проверки пользовательского ввода на соответствие шаблону атрибутов ТИП и ПОЗ
+    /// </summary>
     public static class ValidationService
     {
         // Регулярное выражение для ТИП: только латинские буквы, от 1 до 4 символов
         private static readonly Regex TypeRegex = new Regex(@"^[A-Za-z]{1,4}$", RegexOptions.Compiled);
 
-        // Регулярное выражение для ПОЗ: формат "контур-номер" (например, 1-1, 25-8, 100-15)
+        // Регулярное выражение для ПОЗ: формат "контур-номер" (1-1, 25-8, 100-15)
         private static readonly Regex PositionRegex = new Regex(@"^([1-9][0-9]{0,2})-([1-9][0-9]{0,2})$", RegexOptions.Compiled);
 
         // Проверить обозначение типа (ТИП)
         public static ValidationResult ValidateTypeDesignation(string typeDesignation)
         {
+            // Проверка на пустую строку
             if (string.IsNullOrWhiteSpace(typeDesignation))
             {
                 return ValidationResult.Error("Обозначение типа не может быть пустым.");
@@ -23,7 +26,8 @@ namespace NanoCAD.API.Services
             if (!TypeRegex.IsMatch(typeDesignation))
             {
                 return ValidationResult.Error(
-                    "Обозначение типа должно содержать только латинские буквы и быть длиной от 1 до 4 символов.\n");
+                    "Обозначение типа должно содержать только латинские буквы (A-Z) и быть длиной от 1 до 4 символов.\n" +
+                    "Примеры: TE, PE, PI, LT");
             }
 
             return ValidationResult.Success();
@@ -41,36 +45,10 @@ namespace NanoCAD.API.Services
             if (!match.Success)
             {
                 return ValidationResult.Error(
-                    "Позиционное обозначение должно быть в формате 'контур-номер'.\n");
-            }
-
-            // Дополнительная проверка диапазонов
-            if (int.TryParse(match.Groups[1].Value, out int contour) && contour > 999)
-            {
-                return ValidationResult.Error("Номер контура не может превышать 999.");
-            }
-
-            if (int.TryParse(match.Groups[2].Value, out int element) && element > 999)
-            {
-                return ValidationResult.Error("Номер элемента не может превышать 999.");
-            }
-
-            return ValidationResult.Success();
-        }
-
-        // Проверить и ТИП, и ПОЗ
-        public static ValidationResult ValidateAll(string typeDesignation, string position)
-        {
-            var typeResult = ValidateTypeDesignation(typeDesignation);
-            if (!typeResult.IsValid)
-            {
-                return typeResult;
-            }
-
-            var positionResult = ValidatePosition(position);
-            if (!positionResult.IsValid)
-            {
-                return positionResult;
+                    "Позиционное обозначение должно быть в формате 'контур-номер'.\n" +
+                    "Контур: число от 1 до 999\n" +
+                    "Номер: число от 1 до 999\n" +
+                    "Примеры: 1-1, 5-12, 100-8");
             }
 
             return ValidationResult.Success();
@@ -84,7 +62,7 @@ namespace NanoCAD.API.Services
             {
                 return contour;
             }
-            return 1; // По умолчанию
+            return 1;
         }
 
         // Извлечь номер элемента из позиционного обозначения
@@ -95,10 +73,10 @@ namespace NanoCAD.API.Services
             {
                 return element;
             }
-            return 1; // По умолчанию
+            return 1;
         }
 
-        // Проверить, соответствует ли строка формату ПОЗ (без строгой валидации)
+        // Проверить, соответствует ли строка формату ПОЗ
         public static bool IsPositionFormat(string position)
         {
             return PositionRegex.IsMatch(position);

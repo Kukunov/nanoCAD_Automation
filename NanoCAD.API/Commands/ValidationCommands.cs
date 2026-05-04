@@ -6,7 +6,9 @@ using Application = HostMgd.ApplicationServices.Application;
 
 namespace NanoCAD.API.Commands
 {
-    // Команды для проверки валидации
+    /// <summary>
+    /// Команды для проверки валидации ТИП, ПОЗ
+    /// </summary>
     public class ValidationCommands
     {
         // Проверить строку на соответствие формату ТИП
@@ -18,7 +20,7 @@ namespace NanoCAD.API.Commands
             if (doc == null) return;
             var ed = doc.Editor;
 
-            var result = ed.GetString("\nВведите обозначение типа для проверки: ");
+            var result = ed.GetString("\nВведите обозначение типа для проверки (например, TE): ");
             if (result.Status != PromptStatus.OK) return;
 
             string input = result.StringResult;
@@ -43,7 +45,7 @@ namespace NanoCAD.API.Commands
             if (doc == null) return;
             var ed = doc.Editor;
 
-            var result = ed.GetString("\nВведите позиционное обозначение для проверки: ");
+            var result = ed.GetString("\nВведите позиционное обозначение для проверки (например, 1-1): ");
             if (result.Status != PromptStatus.OK) return;
 
             string input = result.StringResult;

@@ -3,12 +3,14 @@ using System.Reflection;
 
 namespace NanoCAD.API.Helpers
 {
+    /// <summary>
     /// Вспомогательный класс для определения пути к файлу блоков
+    /// </summary>
     public static class PathHelper
     {
         private static string? _blocksFilePath;
 
-        /// Получить путь к файлу blocks.dwg (находится в папке с DLL)
+        // Получить путь к файлу blocks.dwg (находится в папке с DLL)
         public static string GetBlocksFilePath()
         {
             if (_blocksFilePath == null)
@@ -20,10 +22,18 @@ namespace NanoCAD.API.Helpers
             return _blocksFilePath;
         }
 
-        /// Проверить существование файла blocks.dwg
+        // Проверить существование файла blocks.dwg
         public static bool BlocksFileExists()
         {
             return File.Exists(GetBlocksFilePath());
+        }
+
+        // Получить путь к папке с ресурсами UI
+        public static string GetUIResourcesPath()
+        {
+            string assemblyPath = Assembly.GetExecutingAssembly().Location;
+            string assemblyDir = Path.GetDirectoryName(assemblyPath) ?? string.Empty;
+            return Path.Combine(assemblyDir, "Resources");
         }
     }
 }

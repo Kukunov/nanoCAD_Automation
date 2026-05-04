@@ -6,10 +6,12 @@ using NanoCAD.API.Models;
 
 namespace NanoCAD.API.Services
 {
-    // Сервис для вставки блоков ГОСТ из файла-контейнера blocks.dwg
+    /// <summary>
+    /// Сервис для вставки блоков из файла-контейнера blocks.dwg
+    /// </summary>
     public class BlockService
     {
-        // Главный публичный метод - вставляет блок с атрибутами
+        // Вставка блоков с атрибутами
         public BlockInsertResult InsertBlock(Database db, BlockInsertOptions options, Point3d insertionPoint)
         {
             // Создаём объект результата и заполняем входными данными
@@ -30,13 +32,11 @@ namespace NanoCAD.API.Services
             }
 
             // Начинаем транзакцию с чертежом nanoCAD
-            // Транзакция - это единица работы, все изменения либо применяются,
-            // либо откатываются в случае ошибки
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 try
                 {
-                    // Получаем таблицу блоков чертежа (содержит все определения блоков)
+                    // Получаем таблицу блоков чертежа
                     var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
 
                     // Получаем пространство модели (то, что видно на экране)
@@ -47,7 +47,7 @@ namespace NanoCAD.API.Services
                     {
                         ImportBlockFromContainer(db, tr, bt, options.BlockName, blocksPath);
 
-                        // Обновляем ссылку на таблицу блоков, так как она изменилась
+                        // Обновляем ссылку на таблицу блоков
                         bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
                     }
 
@@ -66,7 +66,7 @@ namespace NanoCAD.API.Services
                     var blockRef = new BlockReference(insertionPoint, blockDefId)
                     {
                         ScaleFactors = new Scale3d(1, 1, 1),  // Масштаб 1:1
-                        Rotation = 0                           // Без поворота
+                        Rotation = 0                          // Без поворота
                     };
 
                     // Добавляем блок в пространство модели
@@ -76,7 +76,7 @@ namespace NanoCAD.API.Services
                     // Создаём и заполняем атрибуты блока
                     CreateAttributes(tr, blockRef, options);
 
-                    // Фиксируем транзакцию - сохраняем все изменения
+                    // Фиксируем транзакцию
                     tr.Commit();
 
                     result.Success = true;
@@ -95,8 +95,8 @@ namespace NanoCAD.API.Services
         }
 
         // Импортирует определение блока из внешнего файла blocks.dwg
-        private void ImportBlockFromContainer(Database targetDb, Transaction targetTr,
-                                               BlockTable targetBt, string blockName, string containerPath)
+        private void ImportBlockFromContainer(Database targetDb, Transaction targetTr, 
+                                              BlockTable targetBt, string blockName, string containerPath)
         {
             // Создаём временную базу данных для файла-контейнера
             using (var sourceDb = new Database(false, true))
@@ -123,7 +123,7 @@ namespace NanoCAD.API.Services
                     var idMapping = new IdMapping();
 
                     // Клонируем определение блока из исходного файла в текущий чертёж
-                    // WblockCloneObjects - глубокое копирование объектов между базами данных
+                    // Глубокое копирование объектов между базами данных
                     targetDb.WblockCloneObjects(
                         new ObjectIdCollection { sourceBlockId },   // Что копируем
                         targetBt.ObjectId,                          // Владелец в целевом чертеже
@@ -148,27 +148,26 @@ namespace NanoCAD.API.Services
             if (!blockDef.HasAttributeDefinitions)
                 return;
 
-            // Перебираем все объекты в определении блока
+            // Перебираем объекты в определении блока
             foreach (ObjectId objId in blockDef)
             {
                 // Получаем объект из чертежа
                 var obj = tr.GetObject(objId, OpenMode.ForRead);
 
-                // Нас интересуют только определения атрибутов (AttributeDefinition)
+                // Находим определения атрибутов (AttributeDefinition)
                 if (obj is AttributeDefinition attDef)
                 {
                     // Создаём новый атрибут (AttributeReference)
                     var attRef = new AttributeReference();
 
-                    // КРИТИЧЕСКИ ВАЖНО: SetAttributeFromBlock правильно инициализирует атрибут,
-                    // копируя все свойства из определения и связывая его с блоком
+                    // Копируем все свойства из определения и связываем атрибут с блоком
                     attRef.SetAttributeFromBlock(attDef, blockRef.BlockTransform);
 
                     // TransformBy применяет матрицу трансформации блока (позиция, масштаб, поворот)
                     // к позиции атрибута, чтобы он правильно разместился на чертеже
                     attRef.Position = attDef.Position.TransformBy(blockRef.BlockTransform);
 
-                    // Получаем тег атрибута (имя) для определения, какое значение подставить
+                    // Получаем тег атрибута для определения, какое значение подставить
                     string tag = attDef.Tag.Trim().ToUpperInvariant();
 
                     // Заполняем значение атрибута в зависимости от тега

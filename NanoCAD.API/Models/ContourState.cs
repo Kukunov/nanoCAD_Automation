@@ -1,10 +1,15 @@
 ﻿namespace NanoCAD.API.Models
 {
-    // Состояние контура автоматизации
+    /// <summary>
+    /// Состояние контура автоматизации
+    /// </summary>
     public class ContourState
     {
         // Номер текущего контура (1, 2, 3...)
         public int CurrentContour { get; set; } = 1;
+
+        // Последнее использованное обозначение типа (ТИП)
+        public string LastTypeDesignation { get; set; } = "TE";
 
         // Счётчики элементов для каждого контура
         // Ключ - номер контура, Значение - последний использованный номер элемента

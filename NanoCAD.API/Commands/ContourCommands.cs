@@ -10,12 +10,14 @@ using Application = HostMgd.ApplicationServices.Application;
 
 namespace NanoCAD.API.Commands
 {
-    // Команды для управления контурами автоматизации
+    /// <summary>
+    /// Команды и методы для управления контурами автоматизации
+    /// </summary>
     public class ContourCommands
     {
-        // Показать текущий контур
+        // Показать сводку по контурам и позициям
         [CommandMethod("ИНФОКОН", CommandFlags.Modal)]
-        [CommandMethod("INFLOOP", CommandFlags.Modal)]
+        [CommandMethod("INFOLOOP", CommandFlags.Modal)]
         public void ShowContourInfo()
         {
             var doc = Application.DocumentManager.MdiActiveDocument;
@@ -24,16 +26,30 @@ namespace NanoCAD.API.Commands
 
             var service = new ContourService(doc.Database);
             ed.WriteMessage($"\n=== Информация о контурах ===");
-            ed.WriteMessage($"\n{service.GetStatusInfo()}");
+            ed.WriteMessage($"\nАктивный контур: {service.GetCurrentContour()}");
+            ed.WriteMessage($"\nСледующая вставка: {service.GetNextPositionPreview()}");
 
+            // Сводка по контурам (только непустые)
             var allContours = service.GetAllContours();
-            if (allContours.Count > 0)
+            var activeContours = allContours
+                .Where(kvp => kvp.Value > 0)
+                .OrderBy(kvp => kvp.Key)
+                .ToList();
+
+            if (activeContours.Count > 0)
             {
-                ed.WriteMessage($"\n\nВсе контуры:");
-                foreach (var kvp in allContours)
+                int totalElements = activeContours.Sum(kvp => kvp.Value);
+
+                ed.WriteMessage($"\n\nУчтённые контуры:");
+                foreach (var kvp in activeContours)
                 {
-                    ed.WriteMessage($"\n  Контур {kvp.Key}: {kvp.Value} элементов");
+                    ed.WriteMessage($"\n  Контур {kvp.Key}: последняя вставка {kvp.Key}-{kvp.Value}");
                 }
+                ed.WriteMessage($"\n\nВсего учтённых элементов: {totalElements}");
+            }
+            else
+            {
+                ed.WriteMessage($"\n\nНет учтённых контуров.");
             }
         }
 

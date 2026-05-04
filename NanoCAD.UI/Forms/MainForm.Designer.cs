@@ -1,4 +1,4 @@
-﻿namespace NanoCAD.UI
+﻿namespace NanoCAD.UI.Forms
 {
     partial class MainForm
     {
@@ -27,6 +27,9 @@
             btnCancel = new Button();
             btnOK = new Button();
             gbInsertAttributes = new GroupBox();
+            nudElement = new NumericUpDown();
+            nudContour = new NumericUpDown();
+            lblPositionValue = new Label();
             lblPositionCaption = new Label();
             lblElementNumber = new Label();
             lblContourNumber = new Label();
@@ -42,16 +45,13 @@
             btnChangeContour = new Button();
             lblNextElementCaption = new Label();
             tabParams = new TabPage();
-            lblPositionValue = new Label();
-            nudContour = new NumericUpDown();
-            nudElement = new NumericUpDown();
             tabControlMain.SuspendLayout();
             tabInsert.SuspendLayout();
             gbInsertAttributes.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudElement).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudContour).BeginInit();
             gbBlockSelection.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pbBlockPreview).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)nudContour).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)nudElement).BeginInit();
             SuspendLayout();
             // 
             // tabControlMain
@@ -113,6 +113,29 @@
             gbInsertAttributes.TabIndex = 8;
             gbInsertAttributes.TabStop = false;
             gbInsertAttributes.Text = "Атрибуты вставки";
+            // 
+            // nudElement
+            // 
+            nudElement.Location = new Point(198, 88);
+            nudElement.Name = "nudElement";
+            nudElement.Size = new Size(61, 23);
+            nudElement.TabIndex = 7;
+            // 
+            // nudContour
+            // 
+            nudContour.Location = new Point(198, 57);
+            nudContour.Name = "nudContour";
+            nudContour.Size = new Size(61, 23);
+            nudContour.TabIndex = 6;
+            // 
+            // lblPositionValue
+            // 
+            lblPositionValue.AutoSize = true;
+            lblPositionValue.Location = new Point(198, 135);
+            lblPositionValue.Name = "lblPositionValue";
+            lblPositionValue.Size = new Size(12, 15);
+            lblPositionValue.TabIndex = 5;
+            lblPositionValue.Text = "-";
             // 
             // lblPositionCaption
             // 
@@ -178,13 +201,13 @@
             // 
             pbBlockPreview.Location = new Point(6, 22);
             pbBlockPreview.Name = "pbBlockPreview";
-            pbBlockPreview.Size = new Size(127, 126);
+            pbBlockPreview.Size = new Size(127, 127);
             pbBlockPreview.TabIndex = 7;
             pbBlockPreview.TabStop = false;
             // 
             // btnResetCounter
             // 
-            btnResetCounter.Location = new Point(278, 122);
+            btnResetCounter.Location = new Point(278, 123);
             btnResetCounter.Name = "btnResetCounter";
             btnResetCounter.Size = new Size(100, 26);
             btnResetCounter.TabIndex = 6;
@@ -229,7 +252,7 @@
             // 
             // btnChangeContour
             // 
-            btnChangeContour.Location = new Point(153, 122);
+            btnChangeContour.Location = new Point(156, 123);
             btnChangeContour.Name = "btnChangeContour";
             btnChangeContour.Size = new Size(106, 26);
             btnChangeContour.TabIndex = 5;
@@ -255,29 +278,6 @@
             tabParams.Text = "Параметры";
             tabParams.UseVisualStyleBackColor = true;
             // 
-            // lblPositionValue
-            // 
-            lblPositionValue.AutoSize = true;
-            lblPositionValue.Location = new Point(198, 135);
-            lblPositionValue.Name = "lblPositionValue";
-            lblPositionValue.Size = new Size(12, 15);
-            lblPositionValue.TabIndex = 5;
-            lblPositionValue.Text = "-";
-            // 
-            // nudContour
-            // 
-            nudContour.Location = new Point(198, 57);
-            nudContour.Name = "nudContour";
-            nudContour.Size = new Size(61, 23);
-            nudContour.TabIndex = 6;
-            // 
-            // nudElement
-            // 
-            nudElement.Location = new Point(198, 88);
-            nudElement.Name = "nudElement";
-            nudElement.Size = new Size(61, 23);
-            nudElement.TabIndex = 7;
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -286,16 +286,15 @@
             Controls.Add(tabControlMain);
             Name = "MainForm";
             Text = "Схемы по ГОСТ 21.208-2013";
-            Load += Form1_Load;
             tabControlMain.ResumeLayout(false);
             tabInsert.ResumeLayout(false);
             gbInsertAttributes.ResumeLayout(false);
             gbInsertAttributes.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudElement).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudContour).EndInit();
             gbBlockSelection.ResumeLayout(false);
             gbBlockSelection.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pbBlockPreview).EndInit();
-            ((System.ComponentModel.ISupportInitialize)nudContour).EndInit();
-            ((System.ComponentModel.ISupportInitialize)nudElement).EndInit();
             ResumeLayout(false);
         }
 

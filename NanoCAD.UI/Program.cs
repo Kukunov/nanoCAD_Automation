@@ -1,3 +1,7 @@
+using System;
+using System.Windows.Forms;
+using NanoCAD.UI.Forms;
+
 namespace NanoCAD.UI
 {
     internal static class Program
@@ -5,10 +9,11 @@ namespace NanoCAD.UI
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            // «апускаем форму как главное окно приложени€
+            Application.Run(new MainForm());
         }
     }
 }

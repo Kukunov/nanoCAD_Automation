@@ -4,7 +4,9 @@ using NanoCAD.API.Models;
 
 namespace NanoCAD.API.Data
 {
-    // Класс для сохранения и загрузки состояния контуров в XData чертежа
+    /// <summary>
+    /// Класс для сохранения и загрузки состояния контуров в XData чертежа
+    /// </summary>
     public static class ContourStateStore
     {
         // Уникальное имя приложения для XData

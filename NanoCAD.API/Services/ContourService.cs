@@ -4,10 +4,12 @@ using NanoCAD.API.Data;
 
 namespace NanoCAD.API.Services
 {
-    // Сервис для управления контурами автоматизации
+    /// <summary>
+    /// Сервис для управления контурами автоматизации
+    /// </summary>
     public class ContourService
     {
-        private readonly Database _db;
+        private Database _db;
         private ContourState _state;
 
         public ContourService(Database db)
@@ -16,10 +18,60 @@ namespace NanoCAD.API.Services
             _state = ContourStateStore.LoadState(db);
         }
 
+        // Получить все контуры и их счётчики
+        public Dictionary<int, int> GetAllContours()
+        {
+            return new Dictionary<int, int>(_state.ElementCounters);
+        }
+
         // Получить текущий номер контура
         public int GetCurrentContour()
         {
             return _state.CurrentContour;
+        }
+
+        // Получить последнее использованное обозначение типа
+        public string GetLastTypeDesignation()
+        {
+            return _state.LastTypeDesignation;
+        }
+
+        // Получить следующее позиционное обозначение
+        public string GetNextPosition()
+        {
+            string position = _state.GetNextPosition();
+            SaveState();
+            return position;
+        }
+
+        // Получить следующее позиционное обозначение для указанного контура
+        public string GetNextPosition(int contourNumber)
+        {
+            string position = _state.GetPosition(contourNumber, _state.GetNextElementNumber(contourNumber));
+            SaveState();
+            return position;
+        }
+
+        // Получить следующую позицию без увеличения счётчика (для предпросмотра)
+        public string GetNextPositionPreview()
+        {
+            int currentContour = _state.CurrentContour;
+            int currentCounter = _state.ElementCounters.ContainsKey(currentContour)
+                ? _state.ElementCounters[currentContour]
+                : 0;
+
+            return $"{currentContour}-{currentCounter + 1}";
+        }
+
+        // Получить информацию о текущем состоянии (для отображения)
+        public string GetStatusInfo()
+        {
+            int currentContour = _state.CurrentContour;
+            int currentCounter = _state.ElementCounters.ContainsKey(currentContour)
+                ? _state.ElementCounters[currentContour]
+                : 0;
+
+            return $"Контур: {currentContour}, Следующий элемент: {currentContour}-{currentCounter + 1}";
         }
 
         // Установить текущий контур
@@ -39,37 +91,14 @@ namespace NanoCAD.API.Services
             SaveState();
         }
 
-        // Получить следующее позиционное обозначение
-        public string GetNextPosition()
+        // Сохранить последнее использованное обозначение типа
+        public void SetLastTypeDesignation(string typeDesignation)
         {
-            string position = _state.GetNextPosition();
-            SaveState();
-            return position;
-        }
-
-        // Получить следующее позиционное обозначение для указанного контура
-        public string GetNextPosition(int contourNumber)
-        {
-            string position = _state.GetPosition(contourNumber, _state.GetNextElementNumber(contourNumber));
-            SaveState();
-            return position;
-        }
-
-        // Получить информацию о текущем состоянии (для отображения)
-        public string GetStatusInfo()
-        {
-            int currentContour = _state.CurrentContour;
-            int currentCounter = _state.ElementCounters.ContainsKey(currentContour)
-                ? _state.ElementCounters[currentContour]
-                : 0;
-
-            return $"Контур: {currentContour}, Следующий элемент: {currentContour}-{currentCounter + 1}";
-        }
-
-        // Получить все контуры и их счётчики
-        public Dictionary<int, int> GetAllContours()
-        {
-            return new Dictionary<int, int>(_state.ElementCounters);
+            if (!string.IsNullOrWhiteSpace(typeDesignation))
+            {
+                _state.LastTypeDesignation = typeDesignation.ToUpperInvariant();
+                SaveState();
+            }
         }
 
         // Сбросить счётчик текущего контура

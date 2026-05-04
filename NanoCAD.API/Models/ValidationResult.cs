@@ -1,6 +1,8 @@
 ﻿namespace NanoCAD.API.Models
 {
-    // Результат валидации
+    /// <summary>
+    /// Результат валидации
+    /// </summary>
     public class ValidationResult
     {
         public bool IsValid { get; set; } = true;
