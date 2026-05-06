@@ -35,12 +35,12 @@ project.lock.json
 *.nuget.props
 *.nuget.targets
 
-# NanoCAD specific (библиотеки nanoCAD не должны быть в репо)
+# NanoCAD specific
 **/hostmgd.dll
 **/hostdbmgd.dll
 **/TD_Mgd.dll
 
-# Database files (если большие)
+# Database files
 *.db
 *.sqlite
 *.sqlite3
@@ -51,7 +51,7 @@ project.lock.json
 *.sln.ide/
 .idea/
 
-# Files to keep (исключения)
+# Files to keep
 !**/*.cs
 !**/*.csproj
 !**/*.sln
