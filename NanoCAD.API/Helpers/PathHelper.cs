@@ -27,13 +27,5 @@ namespace NanoCAD.API.Helpers
         {
             return File.Exists(GetBlocksFilePath());
         }
-
-        // Получить путь к папке с ресурсами UI
-        public static string GetUIResourcesPath()
-        {
-            string assemblyPath = Assembly.GetExecutingAssembly().Location;
-            string assemblyDir = Path.GetDirectoryName(assemblyPath) ?? string.Empty;
-            return Path.Combine(assemblyDir, "Resources");
-        }
     }
 }

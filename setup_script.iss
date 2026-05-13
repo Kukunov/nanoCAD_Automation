@@ -1,7 +1,7 @@
 ; GOST Automation Setup Script for Inno Setup
 
 #define MyAppName "GOST 21.208 nanoCAD Automation"
-#define MyAppVersion "0.0.3-alpha"
+#define MyAppVersion "0.0.5-alpha"
 #define MyAppPublisher "Кукунов Константин"
 #define MyAppURL "https://github.com/Kukunov/nanoCAD_Automation"
 
@@ -34,11 +34,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "NanoCAD.API.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "blocks.dwg"; DestDir: "{app}"; Flags: ignoreversion
-Source: "NanoCAD.UI.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "NanoCAD.UI.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "NanoCAD.UI.runtimeconfig.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "NanoCAD.UI.deps.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "GOST_Automation.cfg"; DestDir: "{userappdata}\Nanosoft\nanoCAD x64 25.0\Config"; Flags: ignoreversion
+
+; Превью блоков
+Source: "Resources\Previews\*.png"; DestDir: "{app}\Resources\Previews"; Flags: ignoreversion
+; Иконки меню
+Source: "Resources\Icons\*.ico"; DestDir: "{app}\Resources\Icons"; Flags: ignoreversion
 
 [Code]
 
@@ -94,7 +95,7 @@ begin
   end;
 end;
 
-// Проверка, запущен ли процесс nanoCAD.exe
+// Проверка, запущен ли процесс nanoCAD (nCAD.exe)
 function IsNanoCADRunning: Boolean;
 var
   ResultCode: Integer;
@@ -103,7 +104,8 @@ var
 begin
   Result := False;
   TempFile := ExpandConstant('{tmp}') + '\nanoCAD_check.txt';
-  Exec('cmd.exe', '/C tasklist /FI "IMAGENAME eq nanoCAD.exe" /NH > "' + TempFile + '"', 
+  // Ищем процесс с именем nCad.exe
+  Exec('cmd.exe', '/C tasklist /FI "IMAGENAME eq nCad.exe" /NH > "' + TempFile + '"', 
        '', SW_HIDE, true, ResultCode);
   if FileExists(TempFile) then
   begin
@@ -111,7 +113,8 @@ begin
     try
       OutputList.LoadFromFile(TempFile);
       if OutputList.Count > 0 then
-        if Pos('nanoCAD.exe', OutputList.Text) > 0 then
+        // Проверяем наличие nCad.exe в выводе
+        if Pos('nCad.exe', OutputList.Text) > 0 then
           Result := True;
     finally
       OutputList.Free;
@@ -136,11 +139,17 @@ end;
 function InitializeUninstall: Boolean;
 begin
   Result := True;
-  if IsNanoCADRunning then
+  
+  // Пока nanoCAD запущен — показываем предупреждение с жёлтым треугольником
+  while IsNanoCADRunning do
   begin
-    MsgBox('Обнаружен запущенный nanoCAD.' + #13#10 +
-           'Пожалуйста, закройте nanoCAD перед удалением.', mbError, MB_OK);
-    Result := False;
+    if MsgBox('Невозможно продолжить удаление.' + #13#10#13#10 +
+              'Обнаружен запущенный nanoCAD. Закройте его и нажмите "Повторить".',
+              mbError, MB_RETRYCANCEL) = IDCANCEL then
+    begin
+      Result := False;
+      Exit;
+    end;
   end;
 end;
 
@@ -159,6 +168,30 @@ begin
     Result := 'C:\Program Files\Nanosoft\nanoCAD x64 25.0';
 end;
 
+// Заменяет все вхождения Placeholder на Replacement в файле
+procedure ReplacePlaceholderInFile(FilePath, Placeholder, Replacement: String);
+var
+  Content: TStringList;
+  i: Integer;
+  Line: String;
+begin
+  if not FileExists(FilePath) then Exit;
+  
+  Content := TStringList.Create;
+  try
+    Content.LoadFromFile(FilePath);
+    for i := 0 to Content.Count - 1 do
+    begin
+      Line := Content[i];
+      StringChange(Line, Placeholder, Replacement);
+      Content[i] := Line;
+    end;
+    Content.SaveToFile(FilePath);
+  finally
+    Content.Free;
+  end;
+end;
+
 // Действия после копирования файлов (ssPostInstall)
 procedure CurStepChanged(CurStep: TSetupStep);
 var
@@ -170,6 +203,13 @@ begin
   begin
     WorkDir := ExpandConstant('{app}');
     ConfigDir := ExpandConstant('{userappdata}\Nanosoft\nanoCAD x64 25.0\Config');
+    
+    // Заменяем плейсхолдер в .cfg на путь к иконкам
+    ReplacePlaceholderInFile(
+      ConfigDir + '\GOST_Automation.cfg',
+      '{{ICONSPATH}}',
+      WorkDir + '\Resources\Icons\'
+    );
     
     ConfigFile := TStringList.Create;
     try
@@ -241,7 +281,12 @@ begin
         while i < ConfigFile.Count do
         begin
           if Pos('[\Configuration\<<Default>>\Appload\Startup\app0]', ConfigFile[i]) > 0 then
-          begin
+          begin          
+            if (i > 0) and (Trim(ConfigFile[i - 1]) = '') then
+            begin
+              ConfigFile.Delete(i - 1);
+              i := i - 1;
+            end;
             ConfigFile.Delete(i);
             while (i < ConfigFile.Count) and (Pos('[', ConfigFile[i]) <> 1) do
               ConfigFile.Delete(i);

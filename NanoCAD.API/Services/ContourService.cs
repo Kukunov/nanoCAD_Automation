@@ -52,6 +52,17 @@ namespace NanoCAD.API.Services
             return position;
         }
 
+        // Получить следующий номер элемента без увеличения счётчика (для предпросмотра)
+        public int GetNextElementPreview()
+        {
+            int currentContour = _state.CurrentContour;
+            int currentCounter = _state.ElementCounters.ContainsKey(currentContour)
+                ? _state.ElementCounters[currentContour]
+                : 0;
+
+            return currentCounter + 1;
+        }
+
         // Получить следующую позицию без увеличения счётчика (для предпросмотра)
         public string GetNextPositionPreview()
         {
@@ -72,6 +83,21 @@ namespace NanoCAD.API.Services
                 : 0;
 
             return $"Контур: {currentContour}, Следующий элемент: {currentContour}-{currentCounter + 1}";
+        }
+
+        // Получить количество контуров, элементы которых присутствуют на чертеже
+        public int GetTotalContourCount()
+        {
+            var colorService = new ContourColorService();
+            var contourBlocks = colorService.GetContourBlocks(_db);
+            return contourBlocks.Count(kvp => kvp.Value.Count > 0);
+        }
+
+        public int GetTotalBlockCount()
+        {
+            var colorService = new ContourColorService();
+            var contourBlocks = colorService.GetContourBlocks(_db);
+            return contourBlocks.Values.Sum(list => list.Count);
         }
 
         // Установить текущий контур

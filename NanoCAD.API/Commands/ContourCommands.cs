@@ -22,35 +22,7 @@ namespace NanoCAD.API.Commands
         {
             var doc = Application.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
-            var ed = doc.Editor;
-
-            var service = new ContourService(doc.Database);
-            ed.WriteMessage($"\n=== Информация о контурах ===");
-            ed.WriteMessage($"\nАктивный контур: {service.GetCurrentContour()}");
-            ed.WriteMessage($"\nСледующая вставка: {service.GetNextPositionPreview()}");
-
-            // Сводка по контурам (только непустые)
-            var allContours = service.GetAllContours();
-            var activeContours = allContours
-                .Where(kvp => kvp.Value > 0)
-                .OrderBy(kvp => kvp.Key)
-                .ToList();
-
-            if (activeContours.Count > 0)
-            {
-                int totalElements = activeContours.Sum(kvp => kvp.Value);
-
-                ed.WriteMessage($"\n\nУчтённые контуры:");
-                foreach (var kvp in activeContours)
-                {
-                    ed.WriteMessage($"\n  Контур {kvp.Key}: последняя вставка {kvp.Key}-{kvp.Value}");
-                }
-                ed.WriteMessage($"\n\nВсего учтённых элементов: {totalElements}");
-            }
-            else
-            {
-                ed.WriteMessage($"\n\nНет учтённых контуров.");
-            }
+            doc.Editor.WriteMessage("\n" + GetContourReport());
         }
 
         // Сменить текущий контур
@@ -107,6 +79,40 @@ namespace NanoCAD.API.Commands
 
             service.ResetCurrentContour();
             ed.WriteMessage($"\n[OK] Счётчик контура {currentContour} сброшен");
+        }
+
+        public string GetContourReport()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return "Нет открытого чертежа";
+
+            var service = new ContourService(doc.Database);
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("-- Информация о контурах --");
+            sb.AppendLine($"Активный контур: {service.GetCurrentContour()}");
+            sb.AppendLine($"Следующая вставка: {service.GetNextPositionPreview()}");
+            sb.AppendLine();
+
+            var activeContours = service.GetAllContours()
+                .Where(kvp => kvp.Value > 0)
+                .OrderBy(kvp => kvp.Key)
+                .ToList();
+
+            if (activeContours.Count > 0)
+            {
+                sb.AppendLine("Учтённые контуры:");
+                foreach (var kvp in activeContours)
+                    sb.AppendLine($"  Контур {kvp.Key}: последняя вставка {kvp.Key}-{kvp.Value}");
+                sb.AppendLine();
+                sb.AppendLine($"Всего учтённых элементов: {activeContours.Sum(kvp => kvp.Value)}");
+            }
+            else
+            {
+                sb.AppendLine("Нет учтённых контуров.");
+            }
+
+            return sb.ToString();
         }
     }
 }

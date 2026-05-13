@@ -1,5 +1,6 @@
 ﻿using HostMgd.ApplicationServices;
 using HostMgd.EditorInput;
+using NanoCAD.API.Forms;
 using NanoCAD.API.Models;
 using NanoCAD.API.Services;
 using Teigha.Geometry;
@@ -141,6 +142,38 @@ namespace NanoCAD.API.Commands
             else
             {
                 ed.WriteMessage($"\n[ОШИБКА] {result.Message}");
+            }
+
+            // Обновить форму, если она открыта
+            Forms.MainForm.UpdateDisplayIfOpen();
+        }
+
+        public void InsertBlockLoop(BlockInsertOptions options)
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            var ed = doc.Editor;
+
+            var contourService = new ContourService(doc.Database);
+
+            while (true)
+            {
+                var pointOptions = new PromptPointOptions(
+                    "\nУкажите точку вставки (ESC — завершить): "
+                );
+                pointOptions.AllowNone = true;
+
+                var pointResult = ed.GetPoint(pointOptions);
+
+                if (pointResult.Status != PromptStatus.OK)
+                    break;
+
+                // Обновляем только позицию
+                options.Position = contourService.GetNextPosition();
+
+                var result = _blockService.InsertBlock(doc.Database, options, pointResult.Value);
+                if (result.Success)
+                    ed.WriteMessage($"\n  Вставлен {result.Position} (ТИП: {result.TypeDesignation})");
             }
         }
 

@@ -42,6 +42,14 @@ namespace NanoCAD.API.Services
             return Palette[index];
         }
 
+        // Получить название цвета для контура по номеру
+        public static string GetColorName(int contour)
+        {
+            string[] names = { "Красный", "Синий", "Зелёный", "Оранжевый", "Фиолетовый" };
+            int index = (contour - 1) % names.Length;
+            return names[index];
+        }
+
         // Создать или получить слой
         public ObjectId EnsureColorLayer(Database db, Transaction tr)
         {
@@ -236,6 +244,38 @@ namespace NanoCAD.API.Services
                 }
             }
             return null;
+        }
+
+        // Проверить, активна ли цветовая схема (есть ли блоки на слое)
+        public bool IsColorSchemeActive(Database db)
+        {
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                var layerTable = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
+
+                if (!layerTable.Has(ColorLayerName))
+                {
+                    tr.Commit();
+                    return false;
+                }
+
+                // Проверяем есть ли блоки на слое
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                var modelSpace = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+
+                foreach (ObjectId objId in modelSpace)
+                {
+                    var blockRef = tr.GetObject(objId, OpenMode.ForRead) as BlockReference;
+                    if (blockRef != null && blockRef.Layer == ColorLayerName)
+                    {
+                        tr.Commit();
+                        return true;
+                    }
+                }
+
+                tr.Commit();
+                return false;
+            }
         }
     }
 }

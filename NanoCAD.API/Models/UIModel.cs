@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace NanoCAD.UI.Models
+namespace NanoCAD.API.Models
 {
     // Единая модель состояния для всего UI
     public class UIModel
